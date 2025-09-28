@@ -1,9 +1,28 @@
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 import hashlib
 import time
 
-app = FastAPI(title="ForexTrust Corridor Verifier")
+app = FastAPI(
+    title="ForexTrust Corridor Verifier",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# ----- Root -----
+@app.get("/")
+def root():
+    return {
+        "message": "Welcome to the ForexTrust Corridor Verifier API",
+        "endpoints": {
+            "health": "/health",
+            "mint": "/mint",
+            "verify": "/verify",
+            "docs": "/docs"
+        },
+        "status": "running"
+    }
 
 # ----- Models -----
 class MintRequest(BaseModel):
