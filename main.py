@@ -1,14 +1,20 @@
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 import hashlib
 import time
 
-app = FastAPI(
-    title="ForexTrust Corridor Verifier",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
+app = FastAPI(title="ForexTrust Corridor Verifier")
+
+# ----- Models -----
+class MintRequest(BaseModel):
+    corridor: str
+    amount: float
+
+class VerifyRequest(BaseModel):
+    seal: str
+
+# In-memory store
+seals = {}
 
 # ----- Root -----
 @app.get("/")
@@ -24,22 +30,12 @@ def root():
         "status": "running"
     }
 
-# ----- Models -----
-class MintRequest(BaseModel):
-    corridor: str
-    amount: float
-
-class VerifyRequest(BaseModel):
-    seal: str
-
-# In-memory store (replace with db later if needed)
-seals = {}
-
-# ----- Endpoints -----
+# ----- Health -----
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "ForexTrust"}
 
+# ----- Mint -----
 @app.post("/mint")
 def mint_seal(req: MintRequest):
     raw = f"{req.corridor}-{req.amount}-{time.time()}"
@@ -47,6 +43,7 @@ def mint_seal(req: MintRequest):
     seals[seal] = {"corridor": req.corridor, "amount": req.amount, "valid": True}
     return {"seal": seal, "corridor": req.corridor, "amount": req.amount}
 
+# ----- Verify -----
 @app.post("/verify")
 def verify_seal(req: VerifyRequest):
     if req.seal in seals and seals[req.seal]["valid"]:
